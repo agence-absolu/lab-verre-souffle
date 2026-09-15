@@ -167,16 +167,19 @@ export function createFlower() {
   // dans un vrai presse-papier. Mise à l'échelle autour du pied de la tige.
   const scale = 0.75;
   const footY = -0.66;
+  // Hauteur de la corolle (repère de la fleur) : une fois mise à l'échelle,
+  // elle arrive un peu au-dessus du centre du dôme.
+  const bloomY = 0.33;
   flower.scale.setScalar(scale);
   flower.position.y = footY * (1 - scale);
 
   // Tige : tube le long d'une courbe légèrement sinueuse, du lit de frit au cœur.
   const stemCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0.06, footY, 0.03),
-    new THREE.Vector3(0.05, -0.48, 0.06),
-    new THREE.Vector3(-0.01, -0.28, 0.0),
-    new THREE.Vector3(0.0, -0.1, -0.02),
-    new THREE.Vector3(0.0, 0.04, 0.0),
+    new THREE.Vector3(0.06, -0.38, 0.07),
+    new THREE.Vector3(-0.02, -0.1, 0.0),
+    new THREE.Vector3(0.0, 0.16, -0.03),
+    new THREE.Vector3(0.0, bloomY, 0.0),
   ]);
   const greenMaterial = createGreenMaterial();
   const stem = new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 40, 0.017, 10, false), greenMaterial);
@@ -201,7 +204,7 @@ export function createFlower() {
 
   // Corolle : légèrement inclinée vers l'avant pour qu'on la voie de face.
   const bloom = new THREE.Group();
-  bloom.position.y = 0.04;
+  bloom.position.y = bloomY;
   bloom.rotation.set(0.28, 0.4, 0.08);
   flower.add(bloom);
 
