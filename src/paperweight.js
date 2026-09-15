@@ -56,7 +56,7 @@ function createGlassMaterial() {
 
 // Matériau des bulles d'air : sphère chromée plus claire sur le bord
 // (réflexion totale) — l'illusion suffit à cette échelle.
-export function createBubbleMaterial() {
+function createBubbleMaterial() {
   const material = new THREE.MeshStandardNodeMaterial({ metalness: 1, roughness: 0.05, envMapIntensity: 1.4 });
   material.colorNode = Fn(() => {
     const facing = dot(normalView, positionViewDirection).clamp(0, 1);
@@ -95,14 +95,10 @@ function seedBubbles(bubbles, shape) {
 // Lit de frit : le tapis de verre broyé sur lequel repose la composition.
 // Couleur calculée en TSL — une grille de cellules, chacune tirant sa couleur
 // de la palette, avec un bruit fractal pour casser la régularité.
-export const FRIT_PALETTES = {
-  // Cobalt, sarcelle, violet, rehauts blancs et or.
-  classic: [vec3(0.05, 0.08, 0.32), vec3(0.08, 0.45, 0.42), vec3(0.28, 0.1, 0.4), vec3(0.92, 0.9, 0.85), vec3(0.95, 0.72, 0.25)],
-  // Murano : bleus profonds, quelques éclats clairs.
-  murano: [vec3(0.03, 0.1, 0.45), vec3(0.06, 0.22, 0.7), vec3(0.1, 0.35, 0.85), vec3(0.6, 0.75, 0.98), vec3(0.85, 0.9, 1.0)],
-};
+// Palette : cobalt, sarcelle, violet, rehauts blancs et or.
+const FRIT_PALETTE = [vec3(0.05, 0.08, 0.32), vec3(0.08, 0.45, 0.42), vec3(0.28, 0.1, 0.4), vec3(0.92, 0.9, 0.85), vec3(0.95, 0.72, 0.25)];
 
-export function createFritBed(palette = FRIT_PALETTES.classic) {
+function createFritBed(palette = FRIT_PALETTE) {
   const geometry = new THREE.SphereGeometry(1, 96, 24, 0, Math.PI * 2, 0, Math.PI / 2);
   const material = new THREE.MeshStandardNodeMaterial({ roughness: 0.4, metalness: 0 });
 

@@ -22,11 +22,10 @@ l'**objet** encapsulé. L'URL peut fixer la combinaison, pour la partager :
   l'échelle du méplat ; l'objet est réduit pour ne pas frôler les parois (sa
   largeur ≤ la moitié du rayon à sa hauteur) et l'épaisseur de transmission
   est proportionnée au rayon de la forme, sinon l'œuf grossirait tout à l'excès.
-- **Objets** (`src/objects.js`) : *Fleur* (`flower.js`), *Chardon*
-  (`thistle.js` — capitule écailleux en TSL, 170 piquants et 800 filaments
-  instanciés, crème virant au violet), *Bulles de Murano* (`murano.js` — lit
-  bleu et grosses bulles en goutte dont le centre réfracte l'image déjà rendue
-  via `viewportSharedTexture`, la technique de l'article Codrops).
+- **Objets** (`src/objects.js`) : *Fleur* (`flower.js`) et *Chardon*
+  (`thistle.js` — petit capitule écailleux en TSL hérissé de piquants, sous
+  une boule de 2 600 filaments instanciés, crème virant au violet, qui flotte
+  au centre du verre).
 
 - **Le verre** (`src/paperweight.js`) : géométrie issue de la forme choisie et
   `MeshPhysicalNodeMaterial` — transmission, épaisseur, IOR 1,52,

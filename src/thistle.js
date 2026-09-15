@@ -73,7 +73,7 @@ function createSpikes(rand) {
 }
 
 function createFlorets(rand) {
-  const count = 1500;
+  const count = 2600;
   // Un filament : tube fin presque droit, à peine incurvé vers +x local.
   // Unité de longueur 1.
   const path = new THREE.QuadraticBezierCurve3(
@@ -102,11 +102,11 @@ function createFlorets(rand) {
   const up = new THREE.Vector3(0, 1, 0);
   for (let i = 0; i < count; i++) {
     // Le panache est une demi-sphère : les filaments rayonnent depuis la
-    // calotte du capitule et bien au-delà de l'horizontale (~115°) : une boule,
-    // dont seul le dessous laisse deviner le capitule. Répartition uniforme
-    // sur la sphère (acos d'un tirage uniforme).
+    // calotte du capitule et presque tout le tour (~155°) : une boule, dont
+    // seul le dessous laisse deviner le capitule. Répartition uniforme sur la
+    // sphère (acos d'un tirage uniforme).
     const a = rand() * Math.PI * 2;
-    const phi = Math.acos(1 - rand() * 1.42);
+    const phi = Math.acos(1 - rand() * 1.9);
     dir.set(Math.sin(phi) * Math.cos(a), Math.cos(phi), Math.sin(phi) * Math.sin(a));
     dir.x += (rand() - 0.5) * 0.1;
     dir.y += (rand() - 0.5) * 0.1;
@@ -114,7 +114,7 @@ function createFlorets(rand) {
     dir.normalize();
     // Naissance : haut de la calotte pour les filaments dressés, flancs pour
     // les filaments couchés, un peu enfoncée dans le capitule.
-    onHead(Math.max(-0.3, Math.cos(phi)), a, pos, normal);
+    onHead(Math.max(-0.6, Math.cos(phi)), a, pos, normal);
     pos.addScaledVector(normal, -0.012);
     q.setFromUnitVectors(up, dir);
     // Roulis : la légère courbure (+x local) penche vers l'extérieur.
@@ -124,7 +124,7 @@ function createFlorets(rand) {
     roll.setFromAxisAngle(up, angle);
     q.multiply(roll);
     // Longueurs proches : la coupole a une surface régulière, comme au naturel.
-    const len = 0.4 + rand() * 0.08;
+    const len = 0.4 + rand() * 0.06;
     m.compose(pos, q, new THREE.Vector3(1, len, 1));
     florets.setMatrixAt(i, m);
   }
