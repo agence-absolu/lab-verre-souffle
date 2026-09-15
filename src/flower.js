@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu';
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 import { Fn, float, vec2, vec3, color, mix, uv, sin, smoothstep, hue, uniform, mx_noise_float, positionLocal } from 'three/tsl';
-import { seeded } from './paperweight.js';
+import { FOOT_Y, seeded } from './constants.js';
 
 // Réglable depuis le panneau : rotation de teinte des pétales (radians).
 export const petalHue = uniform(0);
@@ -185,10 +185,11 @@ function createHeart(group) {
 
 export function createFlower() {
   const flower = new THREE.Group();
+  rings.length = 0; // une seule fleur à la fois : le panneau régénère celle-ci
   // La fleur est petite et posée bas : c'est le dôme qui la grossit, comme
   // dans un vrai presse-papier. Mise à l'échelle autour du pied de la tige.
   const scale = 0.82;
-  const footY = -0.66;
+  const footY = FOOT_Y;
   // Hauteur de la corolle (repère de la fleur) : une fois mise à l'échelle,
   // elle arrive un peu au-dessus du centre du dôme.
   const bloomY = 0.28;

@@ -18,7 +18,7 @@ import {
   instanceIndex,
   positionGeometry,
 } from 'three/tsl';
-import { BASE_Y, FRIT_RADIUS, FRIT_HEIGHT, seeded } from './paperweight.js';
+import { BASE_Y, FRIT_RADIUS, FRIT_HEIGHT, seeded } from './constants.js';
 
 // Inclusions classiques des presse-papiers : canes de millefiori posées sur le
 // lit de frit, et torsade de latticino autour de la base. Géométries simples,

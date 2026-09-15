@@ -1,5 +1,4 @@
 import * as THREE from 'three/webgpu';
-import { createMillefiori, createTorsade } from './inclusions.js';
 import {
   Fn,
   float,
@@ -19,36 +18,12 @@ import {
   mx_noise_vec3,
   mx_fractal_noise_float,
 } from 'three/tsl';
+import { BASE_Y, FRIT_RADIUS, FRIT_HEIGHT, seeded } from './constants.js';
+import { GLASS_SHAPES, createGlassGeometry, inShell } from './shapes.js';
+import { createMillefiori, createTorsade } from './inclusions.js';
 
-// Réglables depuis le panneau : amplitude de l'ondulation de la normale du verre.
+// Réglable depuis le panneau : amplitude de l'ondulation de la normale du verre.
 export const glassWobble = uniform(0.02);
-
-export const RADIUS = 1;
-export const FRIT_RADIUS = 0.66; // rayon du lit de frit (le méplat fait ~0,71)
-export const FRIT_HEIGHT = 0.11;
-export const BASE_Y = -0.7; // hauteur du méplat : un presse-papier a le fond poli à plat
-
-// Profil du presse-papier : disque de base, petit chanfrein poli, puis arc de
-// sphère jusqu'au sommet. Tourné autour de l'axe Y par LatheGeometry.
-function createDomeGeometry() {
-  const points = [];
-  const chamfer = 0.05;
-  const baseRadius = Math.sqrt(RADIUS * RADIUS - BASE_Y * BASE_Y);
-
-  points.push(new THREE.Vector2(0, BASE_Y));
-  points.push(new THREE.Vector2(baseRadius - chamfer, BASE_Y));
-
-  // L'arc de sphère démarre là où le chanfrein le rejoint.
-  const startAngle = Math.asin((BASE_Y + chamfer) / RADIUS);
-  const arcSteps = 96;
-  for (let i = 0; i <= arcSteps; i++) {
-    const t = i / arcSteps;
-    const a = startAngle + t * (Math.PI / 2 - startAngle);
-    points.push(new THREE.Vector2(Math.cos(a) * RADIUS, Math.sin(a) * RADIUS));
-  }
-
-  return new THREE.LatheGeometry(points, 192);
-}
 
 function createGlassMaterial() {
   const material = new THREE.MeshPhysicalNodeMaterial({
@@ -79,40 +54,55 @@ function createGlassMaterial() {
   return material;
 }
 
-// Bulles d'air prises dans la masse : de minuscules sphères chromées, plus
-// claires sur le bord (réflexion totale) — l'illusion suffit à cette échelle.
-function createBubbles(count = 60) {
-  const geometry = new THREE.SphereGeometry(1, 12, 8);
+// Matériau des bulles d'air : sphère chromée plus claire sur le bord
+// (réflexion totale) — l'illusion suffit à cette échelle.
+export function createBubbleMaterial() {
   const material = new THREE.MeshStandardNodeMaterial({ metalness: 1, roughness: 0.05, envMapIntensity: 1.4 });
   material.colorNode = Fn(() => {
     const facing = dot(normalView, positionViewDirection).clamp(0, 1);
     const rim = pow(float(1).sub(facing), 2.5);
     return mix(vec3(0.55, 0.6, 0.68), vec3(1.0), rim);
   })();
+  return material;
+}
 
-  const bubbles = new THREE.InstancedMesh(geometry, material, count);
+// Bulles prises dans la masse : semées dans la coque de la forme courante.
+const BUBBLE_MAX = 60;
+
+function createBubbles() {
+  return new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), createBubbleMaterial(), BUBBLE_MAX);
+}
+
+function seedBubbles(bubbles, shape) {
   const m = new THREE.Matrix4();
   const p = new THREE.Vector3();
   const rand = seeded(7);
+  const spanY = shape.topY - shape.baseY;
+  const spanR = Math.max(shape.radiusAt(shape.centerY), shape.baseRadius);
 
   let placed = 0;
-  while (placed < count) {
-    p.set(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1);
-    const r = p.length();
-    // Dans la coque du dôme, pas au cœur (où vit la fleur), pas sous le méplat.
-    if (r < 0.62 || r > 0.9 || p.y < BASE_Y + 0.12) continue;
+  let tries = 0;
+  while (placed < BUBBLE_MAX && tries++ < 5000) {
+    p.set((rand() * 2 - 1) * spanR, shape.baseY + rand() * spanY, (rand() * 2 - 1) * spanR);
+    if (!inShell(shape, p)) continue;
     const s = 0.004 + rand() ** 2 * 0.012;
     m.makeScale(s, s, s).setPosition(p);
     bubbles.setMatrixAt(placed++, m);
   }
   bubbles.instanceMatrix.needsUpdate = true;
-  return bubbles;
 }
 
-// Lit de frit : le tapis de verre broyé multicolore sur lequel repose la fleur.
+// Lit de frit : le tapis de verre broyé sur lequel repose la composition.
 // Couleur calculée en TSL — une grille de cellules, chacune tirant sa couleur
-// d'une petite palette, avec un bruit fractal pour casser la régularité.
-function createFritBed() {
+// de la palette, avec un bruit fractal pour casser la régularité.
+export const FRIT_PALETTES = {
+  // Cobalt, sarcelle, violet, rehauts blancs et or.
+  classic: [vec3(0.05, 0.08, 0.32), vec3(0.08, 0.45, 0.42), vec3(0.28, 0.1, 0.4), vec3(0.92, 0.9, 0.85), vec3(0.95, 0.72, 0.25)],
+  // Murano : bleus profonds, quelques éclats clairs.
+  murano: [vec3(0.03, 0.1, 0.45), vec3(0.06, 0.22, 0.7), vec3(0.1, 0.35, 0.85), vec3(0.6, 0.75, 0.98), vec3(0.85, 0.9, 1.0)],
+};
+
+export function createFritBed(palette = FRIT_PALETTES.classic) {
   const geometry = new THREE.SphereGeometry(1, 96, 24, 0, Math.PI * 2, 0, Math.PI / 2);
   const material = new THREE.MeshStandardNodeMaterial({ roughness: 0.4, metalness: 0 });
 
@@ -126,16 +116,11 @@ function createFritBed() {
     const h = hash(dot(cell, vec3(1, 57, 113)));
     const h2 = hash(dot(cell, vec3(7, 31, 17)).add(1.7));
 
-    const deep = vec3(0.05, 0.08, 0.32); // cobalt
-    const teal = vec3(0.08, 0.45, 0.42);
-    const violet = vec3(0.28, 0.1, 0.4);
-    const white = vec3(0.92, 0.9, 0.85);
-    const gold = vec3(0.95, 0.72, 0.25);
-
-    let c = mix(deep, teal, h.smoothstep(0.3, 0.45));
-    c = mix(c, violet, h.smoothstep(0.62, 0.7));
-    c = mix(c, white, h.smoothstep(0.86, 0.9));
-    c = mix(c, gold, h.smoothstep(0.94, 0.95));
+    const [deep, second, third, light, accent] = palette;
+    let c = mix(deep, second, h.smoothstep(0.3, 0.45));
+    c = mix(c, third, h.smoothstep(0.62, 0.7));
+    c = mix(c, light, h.smoothstep(0.86, 0.9));
+    c = mix(c, accent, h.smoothstep(0.94, 0.95));
 
     const grain = mx_fractal_noise_float(positionWorld.mul(40), 3).mul(0.25).add(1);
     return c.mul(grain).mul(mix(0.75, 1.15, h2));
@@ -147,30 +132,57 @@ function createFritBed() {
   return bed;
 }
 
-export function createPaperweight() {
+const DOME_BASE_RADIUS = GLASS_SHAPES.dome.baseRadius;
+
+export function createPaperweight(shapeKey = 'dome') {
   const group = new THREE.Group();
 
-  const dome = new THREE.Mesh(createDomeGeometry(), createGlassMaterial());
+  const dome = new THREE.Mesh(new THREE.BufferGeometry(), createGlassMaterial());
   dome.renderOrder = 10; // le verre se dessine en dernier : tout l'intérieur est déjà là
   group.add(dome);
 
   const bubbles = createBubbles();
+  group.add(bubbles);
+
+  // Le sol (frit, millefiori, torsade) est construit pour le dôme de référence ;
+  // pour les autres formes on le met à l'échelle du méplat et on le repose dessus.
+  const ground = new THREE.Group();
   const fritBed = createFritBed();
   const millefiori = createMillefiori();
   const torsade = createTorsade();
-  group.add(bubbles, fritBed, millefiori, torsade);
+  ground.add(fritBed, millefiori, torsade);
+  group.add(ground);
 
-  return { group, dome, bubbles, fritBed, millefiori, torsade };
-}
+  let shape = null;
+  let groundScale = 1;
 
-// Petit générateur déterministe (mulberry32) : la disposition des bulles est la
-// même à chaque chargement.
-export function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  const setShape = (key) => {
+    shape = GLASS_SHAPES[key];
+    dome.geometry.dispose();
+    dome.geometry = createGlassGeometry(shape);
+    seedBubbles(bubbles, shape);
+    groundScale = Math.min(1, shape.baseRadius / DOME_BASE_RADIUS);
+    ground.scale.setScalar(groundScale);
+    ground.position.y = shape.baseY - BASE_Y * groundScale;
+    return shape;
+  };
+  setShape(shapeKey);
+
+  // Hauteur du sommet du lit de frit, là où planter les objets.
+  const groundTopY = () => shape.baseY + (0.012 + FRIT_HEIGHT) * groundScale;
+
+  return {
+    group,
+    dome,
+    bubbles,
+    ground,
+    fritBed,
+    millefiori,
+    torsade,
+    setShape,
+    groundTopY,
+    get shape() {
+      return shape;
+    },
   };
 }

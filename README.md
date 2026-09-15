@@ -11,8 +11,23 @@ tuiles plates.
 
 ## Ce qui est rendu
 
-- **Le dôme** (`src/paperweight.js`) : profil tourné (méplat, chanfrein, arc de
-  sphère) et `MeshPhysicalNodeMaterial` — transmission, épaisseur, IOR 1,52,
+Deux menus indépendants, en tête du panneau : la **forme du verre** et
+l'**objet** encapsulé. L'URL peut fixer la combinaison, pour la partager :
+`?forme=egg&objet=thistle`.
+
+- **Formes** (`src/shapes.js`) : *Dôme*, *Sphère*, *Œuf* (proportions d'un
+  œuf Daum), *Galet* (sphère aplatie, façon Murano). Chacune se réduit à une
+  fonction `rayon(y)` : le profil tourné, le chanfrein, le méplat et la zone où
+  semer les bulles s'en déduisent. Le sol (frit, millefiori, torsade) se met à
+  l'échelle du méplat.
+- **Objets** (`src/objects.js`) : *Fleur* (`flower.js`), *Chardon*
+  (`thistle.js` — capitule écailleux en TSL, 170 piquants et 800 filaments
+  instanciés, crème virant au violet), *Bulles de Murano* (`murano.js` — lit
+  bleu et grosses bulles en goutte dont le centre réfracte l'image déjà rendue
+  via `viewportSharedTexture`, la technique de l'article Codrops).
+
+- **Le verre** (`src/paperweight.js`) : géométrie issue de la forme choisie et
+  `MeshPhysicalNodeMaterial` — transmission, épaisseur, IOR 1,52,
   dispersion chromatique, atténuation légèrement bleutée. Un `normalNode` TSL
   ondule imperceptiblement la normale : le verre est soufflé à la main, pas
   usiné.

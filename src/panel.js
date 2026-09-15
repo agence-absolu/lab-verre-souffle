@@ -2,14 +2,28 @@ import GUI from 'lil-gui';
 import { glassWobble } from './paperweight.js';
 import { petalHue, petalShape, updatePetalShape } from './flower.js';
 import { torsadeTurns } from './inclusions.js';
+import { GLASS_SHAPES } from './shapes.js';
+import { OBJECTS } from './objects.js';
 
 // Panneau de réglages (lil-gui), en haut à droite. Il agit directement sur les
-// propriétés des matériaux — ce sont déjà des uniformes côté GPU — et sur deux
-// uniformes TSL maison (ondulation du verre, teinte des pétales).
-export function createPanel({ renderer, controls, dome, bubbles, fritBed, millefiori, torsade, flower, post }) {
+// propriétés des matériaux — ce sont déjà des uniformes côté GPU — et sur
+// quelques uniformes TSL maison (ondulation du verre, teinte des pétales…).
+export function createPanel({ renderer, controls, paperweight, state, setShape, setObject, placeObject, post }) {
+  const { dome, bubbles, fritBed, millefiori, torsade, ground } = paperweight;
   const glass = dome.material;
   const gui = new GUI({ title: 'Réglages', width: 304 });
   if (window.innerWidth <= 720) gui.close();
+
+  // Menus : libellé → clé.
+  const options = (registry) => Object.fromEntries(Object.entries(registry).map(([key, def]) => [def.label, key]));
+  gui.add(state, 'shape', options(GLASS_SHAPES)).name('Forme du verre').onChange(setShape);
+  gui
+    .add(state, 'object', options(OBJECTS))
+    .name('Objet')
+    .onChange((key) => {
+      setObject(key);
+      syncObjectControls();
+    });
 
   const verre = gui.addFolder('Verre');
   verre.add(glass, 'ior', 1, 2.4, 0.01).name('Indice (IOR)');
@@ -27,12 +41,15 @@ export function createPanel({ renderer, controls, dome, bubbles, fritBed, millef
 
   const inclusions = gui.addFolder('Inclusions');
   const petals = { hue: 0 };
-  inclusions
-    .add(petals, 'hue', -180, 180, 1)
-    .name('Teinte pétales (°)')
-    .onChange((value) => (petalHue.value = (value * Math.PI) / 180));
-  inclusions.add(petalShape, 'lift', -1, 1, 0.05).name('Relevé des pétales').onChange(updatePetalShape);
-  inclusions.add(flower, 'visible').name('Fleur');
+  const flowerControls = [
+    inclusions
+      .add(petals, 'hue', -180, 180, 1)
+      .name('Teinte pétales (°)')
+      .onChange((value) => (petalHue.value = (value * Math.PI) / 180)),
+    inclusions.add(petalShape, 'lift', -1, 1, 0.05).name('Relevé des pétales').onChange(updatePetalShape),
+  ];
+  // Le sol se replace sous l'objet quand on le coupe ou le rallume.
+  inclusions.add(ground, 'visible').name('Sol (frit et canes)').onChange(placeObject);
   inclusions.add(fritBed, 'visible').name('Lit de frit');
   inclusions.add(millefiori, 'visible').name('Millefiori');
   inclusions.add(torsade, 'visible').name('Torsade');
@@ -42,6 +59,14 @@ export function createPanel({ renderer, controls, dome, bubbles, fritBed, millef
     .add(air, 'count', 0, bubbles.count, 1)
     .name('Bulles')
     .onChange((value) => (bubbles.count = value));
+
+  // Les réglages propres à la fleur n'apparaissent qu'avec elle ; les cases du
+  // sol reflètent le choix par défaut de l'objet.
+  const syncObjectControls = () => {
+    for (const c of flowerControls) c.show(state.object === 'flower');
+    gui.controllersRecursive().forEach((c) => c.updateDisplay());
+  };
+  syncObjectControls();
 
   const traitement = gui.addFolder('Post-traitement');
   traitement.add(post.settings, 'enabled').name('Activer');
@@ -63,7 +88,17 @@ export function createPanel({ renderer, controls, dome, bubbles, fritBed, millef
   scene.add(controls, 'autoRotateSpeed', -3, 3, 0.1).name('Vitesse');
 
   // reset() rejoue la valeur initiale de chaque contrôleur, onChange compris.
-  gui.add({ reset: () => gui.reset() }, 'reset').name('Réinitialiser');
+  gui
+    .add(
+      {
+        reset: () => {
+          gui.reset();
+          syncObjectControls();
+        },
+      },
+      'reset',
+    )
+    .name('Réinitialiser');
 
   return gui;
 }
