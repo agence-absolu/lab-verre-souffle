@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { createMillefiori, createTorsade } from './inclusions.js';
 import {
   Fn,
   float,
@@ -23,6 +24,8 @@ import {
 export const glassWobble = uniform(0.02);
 
 export const RADIUS = 1;
+export const FRIT_RADIUS = 0.66; // rayon du lit de frit (le méplat fait ~0,71)
+export const FRIT_HEIGHT = 0.11;
 export const BASE_Y = -0.7; // hauteur du méplat : un presse-papier a le fond poli à plat
 
 // Profil du presse-papier : disque de base, petit chanfrein poli, puis arc de
@@ -53,7 +56,7 @@ function createGlassMaterial() {
     metalness: 0,
     roughness: 0.02,
     transmission: 1,
-    thickness: 0.75,
+    thickness: 0.6,
     ior: 1.52,
     dispersion: 0.6,
     attenuationColor: new THREE.Color(0xe8f3ff), // très léger bleu-vert du verre épais
@@ -139,7 +142,7 @@ function createFritBed() {
   })();
 
   const bed = new THREE.Mesh(geometry, material);
-  bed.scale.set(0.6, 0.11, 0.6);
+  bed.scale.set(FRIT_RADIUS, FRIT_HEIGHT, FRIT_RADIUS);
   bed.position.y = BASE_Y + 0.012;
   return bed;
 }
@@ -153,9 +156,11 @@ export function createPaperweight() {
 
   const bubbles = createBubbles();
   const fritBed = createFritBed();
-  group.add(bubbles, fritBed);
+  const millefiori = createMillefiori();
+  const torsade = createTorsade();
+  group.add(bubbles, fritBed, millefiori, torsade);
 
-  return { group, dome, bubbles, fritBed };
+  return { group, dome, bubbles, fritBed, millefiori, torsade };
 }
 
 // Petit générateur déterministe (mulberry32) : la disposition des bulles est la

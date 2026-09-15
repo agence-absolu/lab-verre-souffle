@@ -165,7 +165,7 @@ export function createFlower() {
   const flower = new THREE.Group();
   // La fleur est petite et posée bas : c'est le dôme qui la grossit, comme
   // dans un vrai presse-papier. Mise à l'échelle autour du pied de la tige.
-  const scale = 0.85;
+  const scale = 0.75;
   const footY = -0.66;
   flower.scale.setScalar(scale);
   flower.position.y = footY * (1 - scale);

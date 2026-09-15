@@ -1,11 +1,12 @@
 import GUI from 'lil-gui';
 import { glassWobble } from './paperweight.js';
 import { petalHue } from './flower.js';
+import { torsadeTurns } from './inclusions.js';
 
 // Panneau de réglages (lil-gui), en haut à droite. Il agit directement sur les
 // propriétés des matériaux — ce sont déjà des uniformes côté GPU — et sur deux
 // uniformes TSL maison (ondulation du verre, teinte des pétales).
-export function createPanel({ renderer, controls, dome, bubbles, fritBed, flower, post }) {
+export function createPanel({ renderer, controls, dome, bubbles, fritBed, millefiori, torsade, flower, post }) {
   const glass = dome.material;
   const gui = new GUI({ title: 'Réglages', width: 304 });
   if (window.innerWidth <= 720) gui.close();
@@ -32,6 +33,9 @@ export function createPanel({ renderer, controls, dome, bubbles, fritBed, flower
     .onChange((value) => (petalHue.value = (value * Math.PI) / 180));
   inclusions.add(flower, 'visible').name('Fleur');
   inclusions.add(fritBed, 'visible').name('Lit de frit');
+  inclusions.add(millefiori, 'visible').name('Millefiori');
+  inclusions.add(torsade, 'visible').name('Torsade');
+  inclusions.add(torsadeTurns, 'value', 0, 80, 1).name('Spires de la torsade');
   const air = { count: bubbles.count };
   inclusions
     .add(air, 'count', 0, bubbles.count, 1)

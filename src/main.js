@@ -27,7 +27,7 @@ async function start() {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, window.innerWidth / window.innerHeight, 0.1, 60);
-  camera.position.set(0.7, 1.3, 5.4);
+  camera.position.set(0.8, 2.2, 4.9); // vue en plongée légère : la guirlande se lit autour de la fleur
 
   const controls = new OrbitControls(camera, canvas);
   controls.target.set(0, 0.02, 0);
@@ -46,14 +46,14 @@ async function start() {
 
   createEnvironment(renderer, scene);
 
-  const { group: paperweight, dome, bubbles, fritBed } = createPaperweight();
+  const { group: paperweight, dome, bubbles, fritBed, millefiori, torsade } = createPaperweight();
   const flower = createFlower();
   paperweight.add(flower);
   scene.add(paperweight);
 
   const post = createPostProcessing(renderer, scene, camera, controls);
 
-  createPanel({ renderer, controls, dome, bubbles, fritBed, flower, post });
+  createPanel({ renderer, controls, dome, bubbles, fritBed, millefiori, torsade, flower, post });
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;

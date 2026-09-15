@@ -16,8 +16,13 @@ tuiles plates.
   dispersion chromatique, atténuation légèrement bleutée. Un `normalNode` TSL
   ondule imperceptiblement la normale : le verre est soufflé à la main, pas
   usiné.
-- **Les inclusions** : bulles d'air en instances (rim clair en TSL), lit de
-  verre broyé multicolore dont chaque cellule tire sa couleur d'un `hash`.
+- **Les inclusions** (`src/inclusions.js` et `paperweight.js`) : bulles d'air
+  en instances (rim clair en TSL), lit de verre broyé multicolore dont chaque
+  cellule tire sa couleur d'un `hash`, guirlande de **millefiori** — canes
+  instanciées dont le motif (anneaux concentriques, contour étoilé, palette
+  cosinus) est une fonction de la section, donc étiré le long de l'axe comme
+  une vraie cane — et **torsade de latticino**, anneau dont les filaments
+  sont des droites dans l'espace UV du tore.
 - **La fleur** (`src/flower.js`) : pétales et feuilles en `ParametricGeometry`,
   tige en `TubeGeometry`, étamines instanciées. Dégradés, nervures et
   piquetage calculés en TSL, palette en sRGB via `color()`.
