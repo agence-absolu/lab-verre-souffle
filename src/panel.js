@@ -1,6 +1,6 @@
 import GUI from 'lil-gui';
 import { glassWobble } from './paperweight.js';
-import { petalHue } from './flower.js';
+import { petalHue, petalShape, updatePetalShape } from './flower.js';
 import { torsadeTurns } from './inclusions.js';
 
 // Panneau de réglages (lil-gui), en haut à droite. Il agit directement sur les
@@ -31,6 +31,7 @@ export function createPanel({ renderer, controls, dome, bubbles, fritBed, millef
     .add(petals, 'hue', -180, 180, 1)
     .name('Teinte pétales (°)')
     .onChange((value) => (petalHue.value = (value * Math.PI) / 180));
+  inclusions.add(petalShape, 'lift', -1, 1, 0.05).name('Relevé des pétales').onChange(updatePetalShape);
   inclusions.add(flower, 'visible').name('Fleur');
   inclusions.add(fritBed, 'visible').name('Lit de frit');
   inclusions.add(millefiori, 'visible').name('Millefiori');

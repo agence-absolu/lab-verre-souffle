@@ -6,6 +6,12 @@ import { seeded } from './paperweight.js';
 // Réglable depuis le panneau : rotation de teinte des pétales (radians).
 export const petalHue = uniform(0);
 
+// Réglable depuis le panneau : relevé des pointes de pétales. Positif, elles
+// se redressent vers l'axe (coupe) ; négatif, elles retombent (corolle
+// étalée). La courbure est cuite dans la géométrie : on la régénère au vol.
+export const petalShape = { lift: 0.25 };
+const rings = [];
+
 // Fleur de verre filé (« lampwork ») à la manière des presse-papiers anciens :
 // deux couronnes de pétales, un cœur piqueté d'étamines, une tige et deux
 // feuilles. Toute la géométrie est procédurale, toutes les couleurs en TSL.
@@ -95,9 +101,14 @@ function createGreenMaterial() {
   return material;
 }
 
-function createPetalRing(group, { count, length, width, tilt, radius, height, material, seed, curl }) {
+function petalCurl(baseCurl) {
+  return -petalShape.lift * baseCurl;
+}
+
+function createPetalRing(group, { count, length, width, tilt, radius, height, material, seed, baseCurl }) {
   const rand = seeded(seed);
-  const geometry = createPetalGeometry({ length, width, curl });
+  const geometry = createPetalGeometry({ length, width, curl: petalCurl(baseCurl) });
+  const ring = { length, width, baseCurl, geometry, meshes: [] };
   for (let i = 0; i < count; i++) {
     const petal = new THREE.Mesh(geometry, material);
     const angle = (i / count) * Math.PI * 2 + (rand() - 0.5) * 0.12;
@@ -110,6 +121,17 @@ function createPetalRing(group, { count, length, width, tilt, radius, height, ma
     petal.scale.setScalar(scale);
     pivot.add(petal);
     group.add(pivot);
+    ring.meshes.push(petal);
+  }
+  rings.push(ring);
+}
+
+// Rejoue la géométrie des pétales avec le relevé courant (appelé par le panneau).
+export function updatePetalShape() {
+  for (const ring of rings) {
+    ring.geometry.dispose();
+    ring.geometry = createPetalGeometry({ length: ring.length, width: ring.width, curl: petalCurl(ring.baseCurl) });
+    for (const mesh of ring.meshes) mesh.geometry = ring.geometry;
   }
 }
 
@@ -165,11 +187,11 @@ export function createFlower() {
   const flower = new THREE.Group();
   // La fleur est petite et posée bas : c'est le dôme qui la grossit, comme
   // dans un vrai presse-papier. Mise à l'échelle autour du pied de la tige.
-  const scale = 0.75;
+  const scale = 0.82;
   const footY = -0.66;
   // Hauteur de la corolle (repère de la fleur) : une fois mise à l'échelle,
   // elle arrive un peu au-dessus du centre du dôme.
-  const bloomY = 0.33;
+  const bloomY = 0.28;
   flower.scale.setScalar(scale);
   flower.position.y = footY * (1 - scale);
 
@@ -230,7 +252,7 @@ export function createFlower() {
     height: -0.01,
     material: outer,
     seed: 11,
-    curl: 0.75,
+    baseCurl: 0.75,
   });
   createPetalRing(bloom, {
     count: 9,
@@ -241,7 +263,7 @@ export function createFlower() {
     height: 0.0,
     material: inner,
     seed: 29,
-    curl: 0.55,
+    baseCurl: 0.75,
   });
   createPetalRing(bloom, {
     count: 7,
@@ -252,7 +274,7 @@ export function createFlower() {
     height: 0.01,
     material: inner,
     seed: 37,
-    curl: 0.3,
+    baseCurl: 0.6,
   });
 
   createHeart(bloom);
