@@ -3,7 +3,7 @@ import * as THREE from 'three/webgpu';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createEnvironment } from './environment.js';
 import { createPaperweight } from './paperweight.js';
-import { OBJECTS, disposeObject } from './objects.js';
+import { OBJECTS, disposeObject, fitScale } from './objects.js';
 import { GLASS_SHAPES } from './shapes.js';
 import { createPanel } from './panel.js';
 import { createPostProcessing } from './postprocess.js';
@@ -60,12 +60,18 @@ async function start() {
 
   let object = null;
 
-  // Pose l'objet : pied planté dans le lit de frit s'il est là, sinon sur le méplat.
+  // Pose l'objet : pied planté dans le lit de frit s'il est là, sinon sur le
+  // méplat, et réduit s'il faut pour tenir dans la forme sans frôler les parois.
   const placeObject = () => {
     const def = OBJECTS[state.object];
     const { shape } = paperweight;
-    const scale = def.fitToBase ? Math.min(1, shape.baseRadius / GLASS_SHAPES.dome.baseRadius) : 1;
-    const footTarget = paperweight.ground.visible ? paperweight.groundTopY() - 0.06 : shape.baseY + 0.02;
+    let footTarget = paperweight.ground.visible ? paperweight.groundTopY() - 0.06 : shape.baseY + 0.02;
+    let scale = fitScale(def, shape, footTarget);
+    if (def.floating && !paperweight.ground.visible) {
+      // Suspendu : sa plus grande largeur vient au centre de la forme, sans descendre sous le méplat.
+      footTarget = Math.max(footTarget, shape.focusY - (def.wideY - def.footY) * scale);
+      scale = fitScale(def, shape, footTarget);
+    }
     object.scale.setScalar(scale);
     object.position.y = footTarget - def.footY * scale;
   };
@@ -82,7 +88,7 @@ async function start() {
   const setShape = (key) => {
     state.shape = key;
     const shape = paperweight.setShape(key);
-    controls.target.y = shape.centerY - 0.1;
+    controls.target.y = shape.focusY;
     placeObject();
   };
 

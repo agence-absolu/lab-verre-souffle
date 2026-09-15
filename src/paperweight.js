@@ -78,7 +78,7 @@ function seedBubbles(bubbles, shape) {
   const p = new THREE.Vector3();
   const rand = seeded(7);
   const spanY = shape.topY - shape.baseY;
-  const spanR = Math.max(shape.radiusAt(shape.centerY), shape.baseRadius);
+  const spanR = Math.max(shape.maxRadius, shape.baseRadius);
 
   let placed = 0;
   let tries = 0;
@@ -156,10 +156,21 @@ export function createPaperweight(shapeKey = 'dome') {
   let shape = null;
   let groundScale = 1;
 
+  // L'épaisseur de transmission de three est une distance monde : la même
+  // valeur grossit bien plus dans une forme étroite (œuf) que dans le dôme.
+  // On la proportionne au plus grand rayon de la forme.
+  let thicknessBase = 0.6;
+  const applyThickness = () => (dome.material.thickness = thicknessBase * shape.maxRadius);
+  const setThickness = (value) => {
+    thicknessBase = value;
+    applyThickness();
+  };
+
   const setShape = (key) => {
     shape = GLASS_SHAPES[key];
     dome.geometry.dispose();
     dome.geometry = createGlassGeometry(shape);
+    applyThickness();
     seedBubbles(bubbles, shape);
     groundScale = Math.min(1, shape.baseRadius / DOME_BASE_RADIUS);
     ground.scale.setScalar(groundScale);
@@ -180,6 +191,8 @@ export function createPaperweight(shapeKey = 'dome') {
     millefiori,
     torsade,
     setShape,
+    setThickness,
+    thicknessBase,
     groundTopY,
     get shape() {
       return shape;

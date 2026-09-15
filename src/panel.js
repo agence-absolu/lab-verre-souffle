@@ -28,7 +28,8 @@ export function createPanel({ renderer, controls, paperweight, state, setShape, 
   const verre = gui.addFolder('Verre');
   verre.add(glass, 'ior', 1, 2.4, 0.01).name('Indice (IOR)');
   verre.add(glass, 'dispersion', 0, 3, 0.05).name('Dispersion');
-  verre.add(glass, 'thickness', 0, 2, 0.01).name('Épaisseur');
+  const thickness = { value: paperweight.thicknessBase };
+  verre.add(thickness, 'value', 0, 2, 0.01).name('Épaisseur').onChange(paperweight.setThickness);
   verre.add(glass, 'roughness', 0, 0.5, 0.005).name('Rugosité');
   // La Color de three est en linéaire : on passe par un hexa sRGB, lisible dans le sélecteur.
   const tint = { color: `#${glass.attenuationColor.getHexString()}` };

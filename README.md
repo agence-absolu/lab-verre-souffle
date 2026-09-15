@@ -19,7 +19,9 @@ l'**objet** encapsulé. L'URL peut fixer la combinaison, pour la partager :
   œuf Daum), *Galet* (sphère aplatie, façon Murano). Chacune se réduit à une
   fonction `rayon(y)` : le profil tourné, le chanfrein, le méplat et la zone où
   semer les bulles s'en déduisent. Le sol (frit, millefiori, torsade) se met à
-  l'échelle du méplat.
+  l'échelle du méplat ; l'objet est réduit pour ne pas frôler les parois (sa
+  largeur ≤ la moitié du rayon à sa hauteur) et l'épaisseur de transmission
+  est proportionnée au rayon de la forme, sinon l'œuf grossirait tout à l'excès.
 - **Objets** (`src/objects.js`) : *Fleur* (`flower.js`), *Chardon*
   (`thistle.js` — capitule écailleux en TSL, 170 piquants et 800 filaments
   instanciés, crème virant au violet), *Bulles de Murano* (`murano.js` — lit

@@ -9,18 +9,21 @@ export const GLASS_SHAPES = {
     label: 'Dôme',
     baseY: BASE_Y,
     topY: RADIUS,
+    focusY: 0.02, // centre visuel : là où regarde la caméra et où l'on suspend les objets
     radiusAt: (y) => Math.sqrt(Math.max(RADIUS * RADIUS - y * y, 0)),
   },
   sphere: {
     label: 'Sphère',
     baseY: -0.94, // juste un petit méplat pour tenir debout
     topY: RADIUS,
+    focusY: 0.0,
     radiusAt: (y) => Math.sqrt(Math.max(RADIUS * RADIUS - y * y, 0)),
   },
   egg: {
     label: 'Œuf',
     baseY: BASE_Y,
     topY: 1.05,
+    focusY: 0.12,
     // Ovoïde : ellipse dont la largeur diminue vers le haut (pointe) et
     // s'arrondit vers le bas, proportions d'un œuf Daum (h ≈ 1,4 × l).
     radiusAt: (y) => {
@@ -32,6 +35,7 @@ export const GLASS_SHAPES = {
     label: 'Galet',
     baseY: BASE_Y,
     topY: 0.85,
+    focusY: 0.02,
     // Sphère aplatie, façon Murano.
     radiusAt: (y) => {
       const u = THREE.MathUtils.clamp(y / 0.85, -1, 1);
@@ -42,7 +46,10 @@ export const GLASS_SHAPES = {
 
 for (const shape of Object.values(GLASS_SHAPES)) {
   shape.baseRadius = shape.radiusAt(shape.baseY);
-  shape.centerY = (shape.baseY + shape.topY) / 2;
+  // Plus grand rayon : sert à proportionner l'épaisseur de transmission.
+  let maxRadius = 0;
+  for (let y = shape.baseY; y <= shape.topY; y += 0.01) maxRadius = Math.max(maxRadius, shape.radiusAt(y));
+  shape.maxRadius = maxRadius;
 }
 
 // Profil tourné : disque de base, petit chanfrein poli, puis la courbe
